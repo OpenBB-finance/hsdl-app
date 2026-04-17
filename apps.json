@@ -1,72 +1,98 @@
-{
-    "name": "HSDL Document Explorer",
-    "description": "Search, explore, and view the public collection of documents in the Homeland Security Digital Library.",
-    "img": "https://www.hsdl.org/c/resources/uploads/2022/08/card-library.jpg",
-    "img_dark": "https://www.hsdl.org/c/resources/uploads/2022/08/card-library.jpg",
-    "img_light": "https://www.hsdl.org/c/resources/uploads/2022/08/card-library.jpg",
-    "allowCustomization": true,
-    "tabs": {
-        "main": {
-            "id": "main",
-            "name": "Documents",
-            "layout": [
-                {
-                    "i": "hsdl_document_search",
-                    "x": 0,
-                    "y": 0,
-                    "w": 40,
-                    "h": 10
-                },
-                {
-                    "i": "hsdl_document_viewer",
-                    "x": 0,
-                    "y": 10,
-                    "w": 40,
-                    "h": 18
-                }
-            ]
-        }
-    },
-    "groups": [
-        {
-            "name": "Resource Group",
-            "type": "param",
-            "paramName": "resource_group",
-            "defaultValue": "all",
-            "widgetIds": [
-                "hsdl_document_search",
-                "hsdl_document_viewer"
-            ]
+[
+    {
+        "name": "HSDL Document Explorer",
+        "img": "https://www.hsdl.org/c/resources/uploads/2022/08/card-library.jpg",
+        "img_dark": "https://www.hsdl.org/c/resources/uploads/2022/08/card-library.jpg",
+        "img_light": "https://www.hsdl.org/c/resources/uploads/2022/08/card-library.jpg",
+        "description": "Search, explore, and view the public collection of documents in the Homeland Security Digital Library.",
+        "allowCustomization": true,
+        "tabs": {
+            "main": {
+                "id": "main",
+                "name": "main",
+                "layout": [
+                    {
+                        "i": "hsdl_document_search",
+                        "x": 0,
+                        "y": 0,
+                        "w": 40,
+                        "h": 10,
+                        "state": {
+                            "params": {
+                                "resource_group": "Executive orders",
+                                "year": "2026"
+                            },
+                            "chartView": {
+                                "enabled": false,
+                                "chartType": "line"
+                            },
+                            "columnState": {
+                                "default": {
+                                    "columnPinning": {
+                                        "leftColIds": [
+                                            "docid"
+                                        ],
+                                        "rightColIds": []
+                                    }
+                                }
+                            }
+                        },
+                        "groups": [
+                            "Resource Group",
+                            "Year",
+                            "Subject",
+                            "Publisher"
+                        ]
+                    },
+                    {
+                        "i": "hsdl_document_viewer",
+                        "x": 0,
+                        "y": 10,
+                        "w": 40,
+                        "h": 28,
+                        "state": {
+                            "params": {
+                                "document": [
+                                    "901051"
+                                ],
+                                "resource_group": "Executive orders",
+                                "year": "2026"
+                            }
+                        },
+                        "groups": [
+                            "Resource Group",
+                            "Year",
+                            "Subject",
+                            "Publisher"
+                        ]
+                    }
+                ]
+            }
         },
-        {
-            "name": "Year",
-            "type": "param",
-            "paramName": "year",
-            "defaultValue": "all",
-            "widgetIds": [
-                "hsdl_document_search",
-                "hsdl_document_viewer"
-            ]
-        },
-        {
-            "name": "Subject",
-            "type": "param",
-            "paramName": "subject",
-            "defaultValue": "all",
-            "widgetIds": [
-                "hsdl_document_search",
-                "hsdl_document_viewer"
-            ]
-        },
-        {
-            "name": "Publisher",
-            "type": "param",
-            "paramName": "publisher",
-            "defaultValue": "all",
-            "widgetIds": [
-                "hsdl_document_search",
-                "hsdl_document_viewer"
-            ]
-        }
-    ]
-}
+        "groups": [
+            {
+                "name": "Resource Group",
+                "type": "param",
+                "paramName": "resource_group",
+                "defaultValue": "Executive orders"
+            },
+            {
+                "name": "Year",
+                "type": "param",
+                "paramName": "year",
+                "defaultValue": "2026"
+            },
+            {
+                "name": "Subject",
+                "type": "param",
+                "paramName": "subject"
+            },
+            {
+                "name": "Publisher",
+                "type": "param",
+                "paramName": "publisher",
+                "defaultValue": "all"
+            }
+        ]
+    }
+]
