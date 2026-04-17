@@ -98,7 +98,7 @@ class RequireOpenBBUserMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         if not request.headers.get("x-openbb-user"):
             return JSONResponse(
-                status_code=403, content={"detail": "Missing x-openbb-user header"}
+                status_code=403, content={"detail": "Missing required header"}
             )
         return await call_next(request)
 
@@ -558,7 +558,13 @@ async def view_documents_url(
             ).model_dump()
         )
 
-    return JSONResponse(headers={"Content-Type": "application/json"}, content=files)
+    return JSONResponse(
+        headers={
+            "Content-Type": "application/json",
+            "Cache-Control": "public, max-age=604800, immutable",
+        },
+        content=files,
+    )
 
 
 @app.get("/hsdl/documents/search")
