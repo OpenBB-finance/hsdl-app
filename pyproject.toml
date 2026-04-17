@@ -1,0 +1,13 @@
+[project]
+name = "hsdl"
+version = "0.1.0"
+description = "HSDL catalog sync and OpenBB Workspace backend"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic-settings>=2.3",
+]
+
+[project.scripts]
+hsdl-sync = "src.sync:main"

@@ -1,0 +1,196 @@
+{
+    "hsdl_document_search": {
+        "name": "HSDL Document Search",
+        "description": "Search and explore HSDL homeland security documents.",
+        "category": "HSDL",
+        "type": "table",
+        "endpoint": "/hsdl/documents/search",
+        "gridData": {
+            "w": 40,
+            "h": 20
+        },
+        "refetchInterval": false,
+        "data": {
+            "table": {
+                "columnsDefs": [
+                    {
+                        "field": "docid",
+                        "headerName": "ID",
+                        "cellDataType": "text",
+                        "pinned": "left",
+                        "renderFn": "cellOnClick",
+                        "renderFnParams": {
+                            "actionType": "groupBy",
+                            "groupBy": {
+                                "paramName": "query"
+                            }
+                        }
+                    },
+                    {
+                        "field": "title",
+                        "headerName": "Title",
+                        "cellDataType": "text"
+                    },
+                    {
+                        "field": "publish_date",
+                        "headerName": "Date",
+                        "cellDataType": "text"
+                    },
+                    {
+                        "field": "resource_group",
+                        "headerName": "Resource Group",
+                        "cellDataType": "text"
+                    },
+                    {
+                        "field": "publisher",
+                        "headerName": "Publisher",
+                        "cellDataType": "text"
+                    },
+                    {
+                        "field": "summary",
+                        "headerName": "Summary",
+                        "cellDataType": "text"
+                    }
+                ]
+            }
+        },
+        "params": [
+            {
+                "type": "endpoint",
+                "paramName": "resource_group",
+                "value": "all",
+                "label": "Resource Group",
+                "description": "Top-level HSDL category.",
+                "optionsEndpoint": "/hsdl/resource-groups/options"
+            },
+            {
+                "type": "endpoint",
+                "paramName": "year",
+                "value": "all",
+                "label": "Year",
+                "optionsEndpoint": "/hsdl/years/options",
+                "optionsParams": {
+                    "resource_group": "$resource_group",
+                    "query": "$query"
+                }
+            },
+            {
+                "type": "endpoint",
+                "paramName": "subject",
+                "value": "all",
+                "label": "Subject",
+                "optionsEndpoint": "/hsdl/subjects/options",
+                "optionsParams": {
+                    "resource_group": "$resource_group",
+                    "year": "$year",
+                    "query": "$query"
+                }
+            },
+            {
+                "type": "endpoint",
+                "paramName": "publisher",
+                "value": "all",
+                "label": "Publisher",
+                "optionsEndpoint": "/hsdl/publishers/options",
+                "optionsParams": {
+                    "resource_group": "$resource_group",
+                    "subject": "$subject",
+                    "year": "$year",
+                    "query": "$query"
+                }
+            },
+            {
+                "type": "text",
+                "paramName": "query",
+                "value": "",
+                "label": "Search",
+                "description": "Full-text search across titles, summaries, descriptions, and categories."
+            }
+        ]
+    },
+    "hsdl_document_viewer": {
+        "name": "HSDL Document Viewer",
+        "description": "Browse and view HSDL documents with category filtering.",
+        "category": "HSDL",
+        "type": "multi_file_viewer",
+        "endpoint": "/hsdl/view-url",
+        "gridData": {
+            "w": 40,
+            "h": 20
+        },
+        "refetchInterval": false,
+        "params": [
+            {
+                "type": "endpoint",
+                "paramName": "document",
+                "value": [],
+                "label": "Documents",
+                "description": "Documents to display.",
+                "optionsEndpoint": "/hsdl/documents/options",
+                "optionsParams": {
+                    "resource_group": "$resource_group",
+                    "subject": "$subject",
+                    "publisher": "$publisher",
+                    "year": "$year",
+                    "query": "$query"
+                },
+                "show": false,
+                "multiSelect": true,
+                "roles": [
+                    "fileSelector"
+                ]
+            },
+            {
+                "type": "endpoint",
+                "paramName": "resource_group",
+                "value": "all",
+                "label": "Resource Group",
+                "description": "Top-level HSDL category.",
+                "optionsEndpoint": "/hsdl/resource-groups/options"
+            },
+            {
+                "type": "endpoint",
+                "paramName": "year",
+                "value": "all",
+                "label": "Year",
+                "optionsEndpoint": "/hsdl/years/options",
+                "optionsParams": {
+                    "resource_group": "$resource_group",
+                    "query": "$query"
+                }
+            },
+            {
+                "type": "endpoint",
+                "paramName": "subject",
+                "value": "all",
+                "label": "Subject",
+                "optionsEndpoint": "/hsdl/subjects/options",
+                "optionsParams": {
+                    "resource_group": "$resource_group",
+                    "year": "$year",
+                    "query": "$query"
+                }
+            },
+            {
+                "type": "endpoint",
+                "paramName": "publisher",
+                "value": "all",
+                "label": "Publisher",
+                "optionsEndpoint": "/hsdl/publishers/options",
+                "optionsParams": {
+                    "resource_group": "$resource_group",
+                    "subject": "$subject",
+                    "year": "$year",
+                    "query": "$query"
+                }
+            },
+            {
+                "type": "text",
+                "paramName": "query",
+                "value": "",
+                "label": "Search",
+                "description": "Full-text search across titles, summaries, descriptions, and categories."
+            }
+        ]
+    }
+}
