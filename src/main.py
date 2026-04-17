@@ -8,10 +8,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import List, Optional, Union
 
-from fastapi import Body, FastAPI, Query
+from fastapi import Body, FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from .config import settings
 
@@ -88,6 +89,21 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="HSDL OpenBB API", version="0.1.0", lifespan=lifespan)
 
+
+class RequireOpenBBUserMiddleware(BaseHTTPMiddleware):
+    _EXEMPT_PATHS = {"/health", "/"}
+
+    async def dispatch(self, request: Request, call_next):
+        if request.method == "OPTIONS" or request.url.path in self._EXEMPT_PATHS:
+            return await call_next(request)
+        if not request.headers.get("x-openbb-user"):
+            return JSONResponse(
+                status_code=403, content={"detail": "Missing x-openbb-user header"}
+            )
+        return await call_next(request)
+
+
+app.add_middleware(RequireOpenBBUserMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

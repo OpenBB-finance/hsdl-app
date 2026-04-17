@@ -48,14 +48,9 @@ dokku apps:create hsdl
 dokku storage:ensure-directory hsdl-data
 dokku storage:mount hsdl /var/lib/dokku/data/storage/hsdl-data:/app/data
 
-# custom nginx config (LRU caching + CORS)
-cp nginx.conf.sigil /home/dokku/hsdl/nginx.conf.sigil
-
 # deploy
 git push dokku main
 ```
-
-The `nginx.conf.sigil` template provides LRU caching and CORS using Dokku's template variables for dynamic container routing.
 
 ## API endpoints
 
