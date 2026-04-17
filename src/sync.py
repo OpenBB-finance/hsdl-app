@@ -261,7 +261,7 @@ def insert_doc(conn, rec):
 
     conn.execute(
         """
-        INSERT INTO documents (
+        INSERT OR IGNORE INTO documents (
             docid, collection, title, summary, description, display_date,
             publish_date, file_date, record_entry_date, external_doc_source,
             file_type, is_external, source_url, abstract_url, view_url
