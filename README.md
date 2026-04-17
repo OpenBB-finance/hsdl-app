@@ -1,8 +1,8 @@
 # HSDL Document Explorer
 
-FastAPI backend that scrapes the Homeland Security Digital Library catalog into SQLite and serves it as an [OpenBB Workspace](https://pro.openbb.co) backend.
+FastAPI backend that indexes the Homeland Security Digital Library catalog into SQLite and serves it as an [OpenBB Workspace](https://pro.openbb.co) backend.
 
-The database is built at Docker build time. The catalog is static (no scheduled refresh) — rebuild the image to pick up new documents.
+The database is built at Docker build time. A background task checks for new documents every 12 hours and adds them incrementally.
 
 ## Local development
 
@@ -35,7 +35,7 @@ The API will be available at `http://localhost:7780`. The sync step scrapes the 
 docker compose up --build
 ```
 
-The Docker build runs `python -m src.sync` to bake the database into the image. At runtime, the entrypoint seeds the volume from the build-time snapshot if no database exists yet. An nginx sidecar handles LRU caching (512 MB, 7-day inactive eviction) and CORS.
+The Docker build runs `python -m src.sync` to bake the database into the image. At runtime, the entrypoint seeds the volume from the build-time snapshot if no database exists yet. A background task runs an incremental sync every 12 hours to pick up new documents. An nginx sidecar handles LRU caching (512 MB, 7-day inactive eviction) and CORS.
 
 Data persists in the `hsdl_data` volume.
 
