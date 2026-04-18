@@ -59,17 +59,10 @@ async def _sync_loop():
         await asyncio.sleep(_SYNC_INTERVAL)
         try:
             log.info("Starting incremental sync")
-            global _CONNECTION
-            if _CONNECTION is not None:
-                _CONNECTION.close()
-                _CONNECTION = None
             result = incremental_sync(DB_PATH)
             log.info("Incremental sync complete: %s new documents", result["added"])
         except Exception:
             log.exception("Incremental sync failed")
-        finally:
-            if _CONNECTION is None:
-                get_connection()
 
 
 @asynccontextmanager
@@ -78,13 +71,12 @@ async def lifespan(app: FastAPI):
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
     )
-    get_connection()
     _sync_task = asyncio.create_task(_sync_loop())
     yield
     _sync_task.cancel()
-    if _CONNECTION is not None:
-        _CONNECTION.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-        _CONNECTION.close()
+    conn = get_connection()
+    conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    conn.close()
 
 
 app = FastAPI(title="HSDL OpenBB API", version="0.1.0", lifespan=lifespan)
@@ -143,18 +135,13 @@ class DataError(BaseModel):
     content: str
 
 
-_CONNECTION: sqlite3.Connection | None = None
-
-
 def get_connection() -> sqlite3.Connection:
-    global _CONNECTION
-    if _CONNECTION is None:
-        _CONNECTION = sqlite3.connect(str(DB_PATH), check_same_thread=False)
-        _CONNECTION.row_factory = sqlite3.Row
-        _CONNECTION.execute("PRAGMA journal_mode=WAL")
-        _CONNECTION.execute("PRAGMA mmap_size=268435456")
-        _CONNECTION.execute("PRAGMA cache_size=-64000")
-    return _CONNECTION
+    conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA mmap_size=268435456")
+    conn.execute("PRAGMA cache_size=-64000")
+    return conn
 
 
 def normalize_filter(value: Optional[str]) -> Optional[str]:
@@ -254,7 +241,6 @@ def get_year_options(
     publisher = normalize_filter(publisher)
     query = normalize_filter(query)
 
-    conn = get_connection()
     filters = []
     params: list = []
 
@@ -283,7 +269,9 @@ def get_year_options(
 
     where = (" WHERE " + " AND ".join(filters)) if filters else ""
     sql = f"SELECT SUBSTR(publish_date, 1, 4) AS year, COUNT(*) AS total FROM documents{where} GROUP BY SUBSTR(publish_date, 1, 4) HAVING year GLOB '[0-9][0-9][0-9][0-9]' ORDER BY year DESC"
+    conn = get_connection()
     rows = conn.execute(sql, params).fetchall()
+    conn.close()
 
     options = [FileOption(label="All", value="all")]
     options.extend(
@@ -299,6 +287,7 @@ def get_resource_group_options():
     rows = conn.execute(
         "SELECT value, COUNT(*) AS total FROM document_resource_groups GROUP BY value ORDER BY total DESC, value ASC"
     ).fetchall()
+    conn.close()
 
     options = [FileOption(label="All", value="all")]
     options.extend(
@@ -319,7 +308,6 @@ def get_subject_options(
     year = normalize_filter(year)
     query = normalize_filter(query)
 
-    conn = get_connection()
     params: list = []
 
     if not resource_group and not query and not year:
@@ -350,7 +338,9 @@ def get_subject_options(
         sql = f"SELECT value, COUNT(*) AS total FROM document_subjects WHERE {where} GROUP BY value ORDER BY total DESC, value ASC LIMIT ?"
         params.append(limit)
 
+    conn = get_connection()
     rows = conn.execute(sql, params).fetchall()
+    conn.close()
 
     options = [FileOption(label="All", value="all")]
     options.extend(
@@ -373,7 +363,6 @@ def get_publisher_options(
     year = normalize_filter(year)
     query = normalize_filter(query)
 
-    conn = get_connection()
     params: list = []
     filters = []
 
@@ -404,7 +393,9 @@ def get_publisher_options(
     sql = f"SELECT value, COUNT(*) AS total FROM document_publishers{where} GROUP BY value ORDER BY total DESC, value ASC LIMIT ?"
     params.append(limit)
 
+    conn = get_connection()
     rows = conn.execute(sql, params).fetchall()
+    conn.close()
 
     options = [FileOption(label="All", value="all")]
     options.extend(
@@ -454,6 +445,7 @@ def get_document_options(
         ]
 
     if not docids:
+        conn.close()
         return []
 
     ph = ",".join("?" for _ in docids)
@@ -466,6 +458,7 @@ def get_document_options(
         f"SELECT docid, value FROM document_resource_groups WHERE docid IN ({ph})",
         docids,
     ).fetchall()
+    conn.close()
     rg_map: dict[int, str] = {}
     for r in rg_rows:
         if r["docid"] not in rg_map:
@@ -506,6 +499,7 @@ async def view_documents_url(
         f"SELECT docid, title, file_type, source_url, view_url FROM documents WHERE docid IN ({placeholders})",
         docids,
     ).fetchall()
+    conn.close()
 
     row_map = {str(row["docid"]): row for row in rows}
     files = []
@@ -607,6 +601,7 @@ def search_documents(
         ]
 
     if not docids:
+        conn.close()
         return []
 
     ph = ",".join("?" for _ in docids)
@@ -627,6 +622,7 @@ def search_documents(
     pub_rows = conn.execute(
         f"SELECT docid, value FROM document_publishers WHERE docid IN ({ph})", docids
     ).fetchall()
+    conn.close()
     pub_map: dict[int, str] = {}
     for r in pub_rows:
         pub_map.setdefault(r["docid"], [])
@@ -647,9 +643,11 @@ def search_documents(
 @app.get("/hsdl/documents/{docid}")
 def get_document(docid: int):
     conn = get_connection()
-    row = conn.execute("SELECT * FROM documents WHERE docid = ?", (docid,)).fetchone()
-    if row is None:
+    rows = conn.execute("SELECT * FROM documents WHERE docid = ?", (docid,)).fetchall()
+    if not rows:
+        conn.close()
         return JSONResponse(status_code=404, content={"detail": "Document not found"})
+    row = rows[0]
 
     def collect(table_name: str):
         values = conn.execute(
@@ -666,5 +664,6 @@ def get_document(docid: int):
     payload["resource_group"] = collect("document_resource_groups")
     payload["subjects"] = collect("document_subjects")
     payload["coverage_country"] = collect("document_countries")
+    conn.close()
 
     return JSONResponse(content=payload)
