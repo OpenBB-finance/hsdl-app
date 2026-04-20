@@ -11,11 +11,9 @@ RUN pip install --no-cache-dir .
 COPY widgets.json apps.json entrypoint.sh ./
 
 RUN chmod +x entrypoint.sh && \
-    mkdir -p data _built_data && chown -R hsdl:hsdl /app
+    mkdir -p data && chown -R hsdl:hsdl /app
 
 USER hsdl
-
-RUN HSDL_DB_PATH=/app/_built_data/hsdl_catalog.db HSDL_DATA_DIR=/app/_built_data python -m src.sync
 
 EXPOSE 7780
 

@@ -95,6 +95,27 @@ class RequireOpenBBUserMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+_CACHE_RULES: list[tuple[str, str]] = [
+    ("/hsdl/view-url", "public, max-age=604800, immutable"),
+    ("/hsdl/hierarchy", "public, max-age=3600, stale-while-revalidate=600"),
+    ("/hsdl/documents/", "public, max-age=300, stale-while-revalidate=60"),
+    ("/hsdl/", "public, max-age=60, stale-while-revalidate=30"),
+]
+
+
+class CacheControlMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if request.method == "GET" or request.method == "POST":
+            path = request.url.path
+            for prefix, directive in _CACHE_RULES:
+                if path.startswith(prefix):
+                    response.headers["Cache-Control"] = directive
+                    break
+        return response
+
+
+app.add_middleware(CacheControlMiddleware)
 app.add_middleware(RequireOpenBBUserMiddleware)
 
 app.add_middleware(
@@ -226,7 +247,22 @@ def get_apps():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "database": str(DB_PATH)}
+    if not DB_PATH.exists():
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unavailable", "detail": "Database not found"},
+        )
+    try:
+        conn = get_connection()
+        row = conn.execute("SELECT COUNT(*) FROM documents").fetchone()
+        conn.close()
+        doc_count = row[0]
+    except Exception as exc:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unavailable", "detail": str(exc)},
+        )
+    return {"status": "ok", "database": str(DB_PATH), "documents": doc_count}
 
 
 @app.get("/hsdl/years/options", response_model=List[FileOption])
@@ -553,10 +589,7 @@ async def view_documents_url(
         )
 
     return JSONResponse(
-        headers={
-            "Content-Type": "application/json",
-            "Cache-Control": "public, max-age=604800, immutable",
-        },
+        headers={"Content-Type": "application/json"},
         content=files,
     )
 

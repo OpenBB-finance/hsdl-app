@@ -1,13 +1,6 @@
 #!/bin/sh
 set -e
 
-if [ ! -f "${HSDL_DB_PATH:-/app/data/hsdl_catalog.db}" ] && [ -f /app/_built_data/hsdl_catalog.db ]; then
-    echo "Seeding database from build-time snapshot..."
-    cp /app/_built_data/hsdl_catalog.db "${HSDL_DB_PATH:-/app/data/hsdl_catalog.db}"
-    if [ -f /app/_built_data/hsdl_catalog_hierarchy.json ]; then
-        cp /app/_built_data/hsdl_catalog_hierarchy.json "$(dirname "${HSDL_DB_PATH:-/app/data/hsdl_catalog.db}")/hsdl_catalog_hierarchy.json"
-    fi
-fi
 
 case "$1" in
     sync)
@@ -16,6 +9,11 @@ case "$1" in
         ;;
     serve)
         shift
+        DB_PATH="${HSDL_DB_PATH:-/app/data/hsdl_catalog.db}"
+        if [ ! -f "$DB_PATH" ]; then
+            echo "Database not found at $DB_PATH. Running ingestion..."
+            python -m src.sync
+        fi
         exec uvicorn src.main:app --host 0.0.0.0 --port 7780 "$@"
         ;;
     *)
