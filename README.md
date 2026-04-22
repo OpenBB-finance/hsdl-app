@@ -2,7 +2,7 @@
 
 FastAPI backend that indexes the Homeland Security Digital Library catalog into SQLite and serves it as an [OpenBB Workspace](https://pro.openbb.co) backend.
 
-The database is built at Docker build time. A background task checks for new documents every 12 hours and adds them incrementally.
+The database is built on first boot if no mounted database exists. A background task checks for new documents every 12 hours and adds them incrementally.
 
 ## Local development
 
@@ -35,7 +35,7 @@ The API will be available at `http://localhost:7780`. The sync step scrapes the 
 docker compose up --build
 ```
 
-The Docker entry runs `python -m src.sync`. A background task runs an incremental sync every 12 hours to pick up new documents.
+The Docker entry runs `python -m src.sync` on first boot if the mounted database does not exist. A background task runs an incremental sync every 12 hours to pick up new documents.
 
 Data persists in the `hsdl_data` volume. A check for new documents occurs nightly.
 
