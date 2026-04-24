@@ -1,6 +1,6 @@
 FROM python:3.12-slim
 
-RUN groupadd -r hsdl && useradd -r -g hsdl -m hsdl
+RUN groupadd -g 32767 hsdl && useradd -u 32767 -g 32767 -m hsdl
 
 WORKDIR /app
 
