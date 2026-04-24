@@ -10,7 +10,7 @@ from typing import List, Optional, Union
 
 from fastapi import Body, FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -47,6 +47,12 @@ DB_PATH = Path(settings.hsdl_db_path)
 HIERARCHY_PATH = DB_PATH.with_name("hsdl_catalog_hierarchy.json")
 WIDGETS_PATH = Path(__file__).parent.parent / "widgets.json"
 APPS_PATH = Path(__file__).parent.parent / "apps.json"
+STATIC_DIR = Path(__file__).parent
+PUBLIC_STATIC_FILES: dict[str, tuple[str, str]] = {
+    "openbb-logo.svg": ("openbb-logo.svg", "image/svg+xml"),
+    "openbb-hsdl-screenshot1.png": ("openbb-hsdl-screenshot1.png", "image/png"),
+    "openbb-hsdl-screenshot2.png": ("openbb-hsdl-screenshot2.png", "image/png"),
+}
 
 _SYNC_INTERVAL = 12 * 3600
 _sync_task: asyncio.Task | None = None
@@ -84,9 +90,15 @@ app = FastAPI(title="HSDL OpenBB API", version="0.1.0", lifespan=lifespan)
 
 class RequireOpenBBUserMiddleware(BaseHTTPMiddleware):
     _EXEMPT_PATHS = {"/health", "/"}
+    _EXEMPT_PREFIXES = ("/static/",)
 
     async def dispatch(self, request: Request, call_next):
-        if request.method == "OPTIONS" or request.url.path in self._EXEMPT_PATHS:
+        path = request.url.path
+        if (
+            request.method == "OPTIONS"
+            or path in self._EXEMPT_PATHS
+            or path.startswith(self._EXEMPT_PREFIXES)
+        ):
             return await call_next(request)
         if not request.headers.get("x-openbb-user"):
             return JSONResponse(
@@ -243,6 +255,15 @@ def get_widgets():
 @app.get("/apps.json")
 def get_apps():
     return JSONResponse(content=json.loads(APPS_PATH.read_text(encoding="utf-8")))
+
+
+@app.get("/static/{filename}")
+def serve_static(filename: str):
+    entry = PUBLIC_STATIC_FILES.get(filename)
+    if entry is None:
+        return JSONResponse({"detail": "Not found"}, status_code=404)
+    name, media_type = entry
+    return FileResponse(STATIC_DIR / name, media_type=media_type)
 
 
 @app.get("/health")
