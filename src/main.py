@@ -89,7 +89,7 @@ app = FastAPI(title="HSDL OpenBB API", version="0.1.0", lifespan=lifespan)
 
 
 class RequireOpenBBUserMiddleware(BaseHTTPMiddleware):
-    _EXEMPT_PATHS = {"/health", "/"}
+    _EXEMPT_PATHS = {"/health", "/", "/widgets.json", "/apps.json"}
     _EXEMPT_PREFIXES = ("/static/",)
 
     async def dispatch(self, request: Request, call_next):
