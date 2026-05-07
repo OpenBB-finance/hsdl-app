@@ -18,10 +18,7 @@
                         "w": 40,
                         "h": 10,
                         "state": {
-                            "params": {
-                                "resource_group": "Executive orders",
-                                "year": "2026"
-                            },
+                            "params": {},
                             "chartView": {
                                 "enabled": false,
                                 "chartType": "line"
@@ -51,13 +48,7 @@
                         "w": 40,
                         "h": 28,
                         "state": {
-                            "params": {
-                                "document": [
-                                    "901051"
-                                ],
-                                "resource_group": "Executive orders",
-                                "year": "2026"
-                            }
+                            "params": {}
                         },
                         "groups": [
                             "Resource Group",
@@ -72,24 +63,25 @@
         "groups": [
             {
                 "name": "Resource Group",
-                "type": "param",
+                "type": "endpointParam",
                 "paramName": "resource_group",
-                "defaultValue": "Executive orders"
+                "defaultValue": "all"
             },
             {
                 "name": "Year",
-                "type": "param",
+                "type": "endpointParam",
                 "paramName": "year",
                 "defaultValue": "2026"
             },
             {
                 "name": "Subject",
-                "type": "param",
-                "paramName": "subject"
+                "type": "endpointParam",
+                "paramName": "subject",
+                "defaultValue": "all"
             },
             {
                 "name": "Publisher",
-                "type": "param",
+                "type": "endpointParam",
                 "paramName": "publisher",
                 "defaultValue": "all"
             }
